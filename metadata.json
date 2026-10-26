@@ -1,0 +1,6 @@
+{
+  "name": "Limpi - Curbside Trash Bin Cleaning",
+  "description": "Limpi curbside trash bin cleaning and UV sanitization subscription for homes in Lehigh Acres, Florida.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
