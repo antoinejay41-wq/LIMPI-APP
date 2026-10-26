@@ -83,52 +83,6 @@ export const HowLimpiWorksScreen: React.FC<HowLimpiWorksScreenProps> = ({
           </div>
         </div>
 
-        {/* Pricing Card */}
-        <div className="bg-[#E6F6F4]/70 border border-[#0BA89A]/20 rounded-2xl p-5 shadow-[0_4px_20px_rgba(11,168,154,0.08)] flex flex-col gap-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#0BA89A] text-xs font-bold shadow-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              Eco & UV Clean
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0BA89A] text-white text-xs font-bold shadow-xs">
-              <Check className="w-3.5 h-3.5 stroke-[3]" />
-              {t.threeMonthPlan}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-[#04264A] tracking-tight">
-                $79.95
-              </span>
-              <span className="text-sm font-semibold text-[#04264A]/70">{t.forThreeMonths}</span>
-            </div>
-            <p className="text-sm font-bold text-[#04264A] mt-1">
-              {t.pricingCardTitle}
-            </p>
-            <p className="text-xs text-[#04264A]/65 leading-snug">
-              {t.pricingCardDesc}
-            </p>
-          </div>
-
-          {/* Extra Bins Note Card */}
-          <div className="bg-white rounded-xl p-3.5 shadow-xs flex items-center justify-between gap-3 border border-[#04264A]/5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#E6F6F4] flex items-center justify-center text-[#0BA89A] shrink-0">
-                <PlusCircle className="w-4 h-4 stroke-[2.2]" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#04264A]">
-                  {t.extraBinsNote}
-                </span>
-                <span className="text-[11px] text-[#04264A]/65">
-                  {t.extraBinsSubnote}
-                </span>
-              </div>
-            </div>
-            <span className="text-sm font-bold text-[#0BA89A] shrink-0">$15 each</span>
-          </div>
-        </div>
 
         {/* Trust Guarantee Banner */}
         <div className="bg-white rounded-xl p-3.5 flex items-center gap-3 border border-[#04264A]/6 shadow-xs">

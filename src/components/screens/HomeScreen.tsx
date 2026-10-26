@@ -6,8 +6,6 @@ import {
   Sparkles,
   ShieldCheck,
   ChevronRight,
-  Receipt,
-  CreditCard,
   Trash2,
   CheckCircle2,
 } from 'lucide-react';
@@ -21,7 +19,7 @@ interface HomeScreenProps {
   onNavigateToSchedule: () => void;
   onNavigateToAccount: () => void;
   onNavigateToNotifications: () => void;
-  onNavigateToPayment: () => void;
+  onNavigateToPayment?: () => void;
   onNavigateToAddress: () => void;
   onOpenAvatar?: () => void;
 }
@@ -31,7 +29,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToSchedule,
   onNavigateToAccount,
   onNavigateToNotifications,
-  onNavigateToPayment,
   onNavigateToAddress,
   onOpenAvatar,
 }) => {
@@ -179,93 +176,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </div>
 
-        {/* Account Overview Shortcuts */}
-        <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-extrabold text-[#04264A]">{t.accountOverviewTitle}</h3>
-            <button
-              type="button"
-              onClick={onNavigateToAccount}
-              className="text-xs text-[#0BA89A] font-bold flex items-center gap-0.5 cursor-pointer hover:underline"
-            >
-              <span>{t.viewAll}</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="bg-white rounded-2xl p-1 shadow-sm border border-[#04264A]/8 flex flex-col divide-y divide-[#04264A]/6">
-            {/* Plan Item */}
-            <button
-              type="button"
-              onClick={onNavigateToAccount}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#E6F6F4] flex items-center justify-center text-[#0BA89A] shrink-0">
-                  <Receipt className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-[#04264A] leading-tight">
-                    {booking.planType === '1-clean'
-                      ? t.standardPlanTitle
-                      : t.frequentPlanTitle}
-                  </p>
-                  <p className="text-[11px] text-[#04264A]/60 mt-0.5">
-                    ${booking.planType === '1-clean' ? '79.95' : '99.95'} {t.forThreeMonths}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#04264A]/40" />
-            </button>
-
-            {/* Payment Method Item */}
-            <button
-              type="button"
-              onClick={onNavigateToPayment}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#04264A] shrink-0">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-[#04264A] leading-tight">
-                    {t.paymentMethodShort}
-                  </p>
-                  <p className="text-[11px] text-[#04264A]/60 mt-0.5">
-                    Visa •••• 4022 • {t.autoPayActiveBadge}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#04264A]/40" />
-            </button>
-
-            {/* Address Item */}
-            <button
-              type="button"
-              onClick={onNavigateToAddress}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#E6F6F4] flex items-center justify-center text-[#0BA89A] shrink-0">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-[#04264A] leading-tight">
-                    {t.serviceAddressShort}
-                  </p>
-                  <p className="text-[11px] text-[#04264A]/60 mt-0.5 truncate max-w-[210px]">
-                    {booking.address.street}, Lehigh Acres, FL
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#04264A]/40" />
-            </button>
-          </div>
-        </div>
-
         {/* 100% Sparkle Guarantee Stamp */}
-        <div className="flex items-center justify-center gap-2 text-center text-[#04264A]/60 py-2">
+        <div className="flex items-center justify-center gap-2 text-center text-[#04264A]/60 py-3 mt-auto">
           <CheckCircle2 className="w-4 h-4 text-[#0BA89A]" />
           <span className="text-xs font-semibold">
             {t.sparkleGuaranteeTitle} • Lehigh Acres Standard
