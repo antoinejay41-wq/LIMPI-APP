@@ -28,16 +28,20 @@ Limpi provides full native language switching across the entire application for 
 
 ---
 
-## 💵 Pricing Model
+## 💵 Plans & Pricing Model
 
-Plans have **no monthly payments**. They are billed for **3 months upfront** and renew automatically every 3 months:
+Limpi offers transparent, straightforward curbside cleaning plans:
 
-| Plan | Frequency | Price (3 Months) | Inclusions | Extra Bins |
-| :--- | :--- | :--- | :--- | :--- |
-| **Standard Clean** | 1 cleaning / month | **$79.95** | Up to 2 curbside bins | +$15 each |
-| **Frequent Clean** | 2 cleanings / month | **$99.95** | Up to 2 curbside bins | +$15 each |
+| Plan | Commitment | Price | Inclusions | Bonus Visits | Extra Bins |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Single Visit** | No commitment | **$19.99** / visit | Up to 2 bins | — | +$10 each |
+| **Annual Plan** *(Best Value)* | 1 year | **$239.99** / year | Up to 2 bins (1 visit/mo) | **+5 FREE bonus visits** (17 visits total) | +$10 each |
 
-*Note: 3-month minimum commitment applies. Pausing or skipping a scheduled visit restarts the 3-month cycle.*
+### Extras
+- **Extra visits in the same month** (2 or more services per month): $10 per extra service.
+- **Annual Plan members**: Use your 5 free bonus visits to cover extra services.
+- **3 or more bins**: $10 extra per bin.
+- **Includes up to 2 bins**.
 
 ---
 
@@ -53,38 +57,39 @@ The app is built as a cohesive, clickable mobile experience with zero dead ends:
    - Email submission with confirmed reset link dispatch.
 3. **How Limpi Works & Pricing (`how-it-works`)**:
    - 3-step automated guide: *Pick your plan*, *We clean at your curb*, *Enjoy a fresh bin*.
-   - Transparent pricing card with renewal terms.
+   - Transparent pricing card (*"Single visit $19.99, no commitment. Annual plan $239.99 for 1 year with 5 free visits."*).
 4. **Plan Selection Screen (`plan`)**:
-   - Toggle between 1 or 2 cleans/month with real-time price updates.
-   - Bin count selector (1 bin, 2 bins included, 3+ with $15 add-on indicator).
+   - Two cards: **Single Visit** ($19.99, no commitment) and **Annual Plan** ($239.99 for 1 year, 1 visit/mo + 5 free bonus visits).
+   - Extras section ($10 extra bin over 2 bins, $10 extra service in same month).
+   - Quick bin selector with stepper.
 5. **Service Address Screen (`address`)**:
    - Address, unit, gate code, and curbside placement options.
    - Real-time **Lehigh Acres ZIP code verification** (supporting ZIPs `33936`, `33971`, `33972`, `33973`, `33974`, `33976`).
 6. **Pick Your Day Screen (`pick-day`)**:
-   - Matches local trash collection days (Monday through Friday) mapped to Lehigh Acres neighborhood zones.
-   - Morning (7:30 AM – 11:30 AM) and Afternoon (12:00 PM – 4:00 PM) windows.
+   - Single Visit users choose a date for each booking.
+   - Annual users pick their monthly recurring cleaning day, with a dedicated **"Use a free visit"** button and **"Free visits left: 5"** counter.
 7. **Checkout Screen (`checkout`)**:
-   - Order summary card with 3-month breakdown and payment card details.
-   - Mandatory checkbox agreeing to the 3-month plan and automatic renewal terms.
+   - Order summary itemizes the plan, extra bins ($10 each), and extra services ($10 each) with the total.
+   - Service terms agreement checkbox and Apple Pay / Google Pay / card details.
 8. **Confirmation Screen (`confirmation`)**:
    - Animated celebration checkmark, order receipt number (`#LM-89240`), and first scheduled cleaning route.
 9. **Home Screen (`home`)**:
    - Curbside address pill and animated **Active Shield**.
-   - Hero next cleaning card with 3-month cycle tracker.
-   - Account overview shortcuts for plan, payment, and address.
+   - Hero next cleaning card with date and time window.
+   - Small perk card for Annual members: **"Free visits left: 5"**.
 10. **Schedule Screen (`schedule`)**:
-    - **Upcoming Visits**: Next cleaning countdown, route status, and visit management.
-    - **Past History**: Completed cleans with time-stamped UV-sanitization verification.
-    - 3-Month commitment restart warning modal.
+    - **Upcoming Visits & Past History** tabs.
+    - **"Book another visit"** button for Single Visit users; **"Use a free visit"** button for Annual members.
+    - Visit management with detail modal.
 11. **Visit Details Screen (`visit-detail`)**:
     - Detailed sanitization scope.
-    - In-app rescheduling to any weekday within the current service week.
+    - In-app rescheduling to any weekday within the service area.
 12. **Account Screen (`account`)**:
-    - Member status, active plan badge, 3-month progress meter.
-    - Quick actions: Upgrade Plan, Change Bins, and locked Cancel button with completion tooltips.
+    - Current Plan card: shows *"Single Visit, no commitment"* or *"Annual Plan"* with progress bar *"Month 2 of 12"*, end date, and free-visits-left counter.
+    - "Switch to Annual Plan" for Single Visit members; "Upgrade Plan" & "Change Bins" buttons.
     - Settings navigation: Payment method, service address, local help, and logout confirmation modal.
 13. **Payment Method Screen (`payment-method`)**:
-    - Primary card on file and 256-bit encrypted card update form.
+    - Primary card on file and encrypted card update form.
 14. **Edit Address Screen (`edit-address`)**:
     - Real-time Lehigh Acres validation and bin location adjustments.
 15. **Help & Support Screen (`help`)**:
@@ -92,7 +97,7 @@ The app is built as a cohesive, clickable mobile experience with zero dead ends:
     - "Message Us" direct dispatch message form and "Call Us" hotline (`(239) 555-0192`).
     - 100% Sparkle Guarantee policy.
 16. **Notifications Screen (`notifications`)**:
-    - SMS/email arrival alerts and route completion notices with "Mark all read" toggle.
+    - Arrival alerts and route completion notices with "Mark all read" toggle.
 
 ---
 
@@ -113,46 +118,21 @@ The app is built as a cohesive, clickable mobile experience with zero dead ends:
 - **Background**: `#F8FCFB` & `#F0F5F4`
 - **Typography**: Clean, rounded typography (`Plus Jakarta Sans`)
 - **Buttons**: Full-width rounded buttons with tactile active press animations (`active:scale-[0.98]`).
-- **No Screen Counters**: Clean, minimal segment indicators without clunky page numbers or "(1/10)" badges.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore & Firebase Auth)
+  - **Project ID**: `limpiapp-639b4`
+  - **Firestore Database**: Curbside trash bin cleaning subscriptions, customer profiles, and visits
+  - **Authentication**: Google Sign-In & account creation
+  - **Security Rules**: Role and owner-enforced ABAC rules (`firestore.rules`)
 - **Build Tool**: [Vite 8](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Animations**: [Motion](https://motion.dev/)
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ installed
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd limpi
-
-# Install dependencies
-npm install
-
-# Start the local development server
-npm run dev
-```
-
-The app will start at `http://localhost:3000`.
-
-### Scripts
-
-- `npm run dev` — Starts the development server with Hot Module Replacement.
-- `npm run build` — Builds the production bundle with type checking.
-- `npm run lint` — Validates TypeScript types (`tsc --noEmit`).
 
 ---
 

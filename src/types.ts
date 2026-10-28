@@ -2,6 +2,7 @@ export type ScreenId =
   | 'welcome'
   | 'forgot-password'
   | 'how-it-works'
+  | 'about'
   | 'plan'
   | 'address'
   | 'pick-day'
@@ -14,16 +15,16 @@ export type ScreenId =
   | 'account'
   | 'payment-method'
   | 'edit-address'
-  | 'help';
+  | 'help'
+  | 'giveaway-rules';
 
-export type PlanType = '1-clean' | '2-clean';
+export type PlanType = 'single' | 'annual';
 
 export interface PlanDetails {
   id: PlanType;
   title: string;
   name: string;
-  cleansPerMonth: number;
-  priceQuarterly: number; // e.g. 79.95 or 99.95
+  price: number; // 19.99 or 239.99
   billingPeriod: string;
   binsIncluded: number;
   description: string;
@@ -44,6 +45,9 @@ export interface BookingState {
   planType: PlanType;
   totalBins: number;
   extraBinsCost: number;
+  extraServicesCount: number;
+  extraServicesCost: number;
+  freeVisitsRemaining: number;
   selectedDay: string;
   timeWindow: string;
   address: AddressInfo;
@@ -57,7 +61,9 @@ export interface BookingState {
   orderId?: string;
   firstCleaningDate?: string;
   nextCleaningDate?: string;
-  currentCycleMonth: number;
+  currentCycleMonth?: number; // e.g. 2 of 12
+  annualEndDate?: string;
+  isBonusVisitBooking?: boolean;
 }
 
 export interface CleaningVisit {

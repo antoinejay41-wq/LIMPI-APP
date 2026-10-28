@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Trash2,
   CheckCircle2,
+  Gift,
 } from 'lucide-react';
 import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
@@ -36,29 +37,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const rawDate = booking.nextCleaningDate || `${booking.selectedDay || 'Tuesday'}, Oct 24`;
   const nextDate = translateDateString(rawDate, language);
 
-  const renewalDate = translateDateString('Jan 24, 2024', language);
-
-  // Localized cycle step names
-  const stepUpcoming =
-    language === 'es'
-      ? '24 Oct (Próxima)'
-      : language === 'ht'
-      ? '24 Okt (K ap vini)'
-      : 'Oct 24 (Upcoming)';
-
-  const stepNov =
-    language === 'es'
-      ? 'Limpieza Nov'
-      : language === 'ht'
-      ? 'Netwayaj Nov'
-      : 'Nov Clean';
-
-  const stepDec =
-    language === 'es'
-      ? 'Limpieza Dic'
-      : language === 'ht'
-      ? 'Netwayaj Des'
-      : 'Dec Clean';
+  const freeVisits = booking.freeVisitsRemaining ?? 5;
+  const isAnnual = booking.planType === 'annual';
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FCFB] pb-24">
@@ -127,38 +107,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </p>
           </div>
 
-          {/* 3-Month Commitment Cycle Tracker */}
-          <div className="bg-white/90 rounded-2xl p-4 space-y-3 shadow-xs border border-[#04264A]/5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-[#04264A]">
-                {t.cleaningOneOfThree}
-              </span>
-              <span className="text-xs text-[#0BA89A] font-extrabold">
-                {t.commitmentCycle}
-              </span>
-            </div>
-
-            {/* Segmented Step Bar */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="h-2 rounded-full bg-[#0BA89A] relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/30 animate-pulse" />
-              </div>
-              <div className="h-2 rounded-full bg-[#04264A]/10" />
-              <div className="h-2 rounded-full bg-[#04264A]/10" />
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-[#04264A]/60 font-semibold pt-0.5">
-              <span className="text-[#0BA89A] font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                {stepUpcoming}
-              </span>
-              <span>{stepNov}</span>
-              <span>{stepDec}</span>
-            </div>
-          </div>
-
           {/* Included Services Note: Only the two services! */}
-          <div className="bg-white/70 rounded-xl p-3 border border-[#04264A]/5 flex items-start gap-2.5">
+          <div className="bg-white/90 rounded-2xl p-3.5 border border-[#04264A]/5 flex items-start gap-2.5">
             <Trash2 className="w-4 h-4 text-[#0BA89A] shrink-0 mt-0.5" />
             <div className="flex flex-col text-[11px] text-[#04264A]/80 leading-relaxed">
               <span className="font-bold text-[#04264A]">{t.twoServicesIncluded}</span>
@@ -167,14 +117,89 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
           </div>
 
-          {/* Renewal disclaimer with fully translated date */}
-          <div className="flex items-center gap-2 text-xs text-[#04264A]/70 font-medium">
-            <ShieldCheck className="w-4 h-4 text-[#0BA89A] shrink-0" />
-            <span>
-              {t.renewsOnPrefix} <strong className="text-[#04264A]">{renewalDate}</strong>.
+          {/* Plan Status Line */}
+          <div className="flex items-center justify-between pt-1 text-xs text-[#04264A]/70 font-medium">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#0BA89A] shrink-0" />
+              <span>
+                {isAnnual
+                  ? 'Annual Plan • 12 visits/yr'
+                  : 'Single Visit • No commitment'}
+              </span>
+            </div>
+            <span className="text-[11px] font-bold text-[#0BA89A]">
+              {booking.totalBins} {booking.totalBins === 1 ? t.oneBin : t.twoBins}
             </span>
           </div>
         </div>
+
+        {/* ANNUAL MEMBERS: SMALL CARD "Free visits left: 5" */}
+        {isAnnual ? (
+          <div
+            onClick={onNavigateToSchedule}
+            className="bg-white rounded-3xl p-4 border border-[#0BA89A]/20 shadow-xs flex items-center justify-between cursor-pointer hover:border-[#0BA89A]/40 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#E6F6F4] text-[#0BA89A] flex items-center justify-center shrink-0">
+                <Gift className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-extrabold text-[#04264A]">
+                    {t.freeVisitsLeft}: {freeVisits}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#0BA89A]/15 text-[#006A61] text-[10px] font-black uppercase">
+                    Annual Perk
+                  </span>
+                </div>
+                <span className="text-[11px] text-[#04264A]/60">
+                  Tap to schedule a bonus cleaning visit anytime
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#0BA89A]" />
+          </div>
+        ) : (
+          /* SINGLE VISIT USERS CARD: Book another visit & Switch to Annual */
+          <div className="bg-white rounded-3xl p-4.5 border border-[#04264A]/8 shadow-xs flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#E6F6F4] text-[#0BA89A] flex items-center justify-center">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#04264A]">
+                    Single Visit Service
+                  </h4>
+                  <p className="text-[11px] text-[#04264A]/60">
+                    No commitment • $19.99 per visit
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-black text-[#0BA89A] bg-[#E6F6F4] px-2.5 py-1 rounded-full">
+                $19.99
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onNavigateToSchedule}
+                className="py-2.5 rounded-xl bg-[#0BA89A] text-white font-bold text-xs shadow-xs hover:bg-[#099185] cursor-pointer"
+              >
+                {t.bookAnotherVisitBtn}
+              </button>
+              <button
+                type="button"
+                onClick={onNavigateToAccount}
+                className="py-2.5 rounded-xl bg-[#E6F6F4] text-[#006A61] font-bold text-xs border border-[#0BA89A]/20 hover:bg-[#d8f2ee] cursor-pointer flex items-center justify-center gap-1"
+              >
+                <Sparkles className="w-3 h-3 text-[#0BA89A]" />
+                <span>{t.switchToAnnualPlanBtn}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 100% Sparkle Guarantee Stamp */}
         <div className="flex items-center justify-center gap-2 text-center text-[#04264A]/60 py-3 mt-auto">

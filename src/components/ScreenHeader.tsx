@@ -26,7 +26,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   showProfile = false,
   onProfileClick,
   avatarUrl,
-  userName = 'Sarah Jenkins',
+  userName = 'Limpi Member',
   showNotification = false,
   onNotificationClick,
   showLanguageSelector = true,

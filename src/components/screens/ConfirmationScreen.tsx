@@ -1,21 +1,23 @@
 import React from 'react';
-import { CheckCircle, Calendar, MapPin, Sparkles, ArrowRight, Trash2 } from 'lucide-react';
+import { CheckCircle, Calendar, MapPin, Sparkles, ArrowRight, Trash2, Gift } from 'lucide-react';
 import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-
+import { GiveawayPrizesDisplay } from '../GiveawayPrizesDisplay';
 import { translateDateString } from '../../i18n/dateUtils';
 
 interface ConfirmationScreenProps {
   booking: BookingState;
   onGoHome: () => void;
   onViewSchedule: () => void;
+  onOpenGiveawayRules?: () => void;
 }
 
 export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
   booking,
   onGoHome,
   onViewSchedule,
+  onOpenGiveawayRules,
 }) => {
   const { t, language } = useLanguage();
   const rawCleanDate = booking.firstCleaningDate || `${booking.selectedDay || 'Tuesday'}, Oct 24`;
@@ -117,6 +119,48 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Celebratory Giveaway Card (Annual Plan Only) */}
+        {booking.planType === 'annual' && (
+          <div className="w-full bg-[#E6F6F4]/90 border border-[#0BA89A]/30 rounded-3xl p-4.5 shadow-sm text-left flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-white text-[#0BA89A] flex items-center justify-center shadow-2xs">
+                  <Gift className="w-4.5 h-4.5 stroke-[2.3]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#04264A]">
+                    You're entered to win!
+                  </h3>
+                  <p className="text-[11px] text-[#006A61] font-semibold">
+                    New client 1-year annual giveaway
+                  </p>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-[#0BA89A] text-white text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                Entered
+              </span>
+            </div>
+
+            <p className="text-xs text-[#04264A]/75 leading-relaxed">
+              As a new 1-year commitment member, you have a chance to win one of 3 gifts!
+            </p>
+
+            <GiveawayPrizesDisplay compact={true} />
+
+            {onOpenGiveawayRules && (
+              <div className="pt-0.5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={onOpenGiveawayRules}
+                  className="text-[11px] font-bold text-[#0BA89A] underline hover:text-[#099185] cursor-pointer"
+                >
+                  See giveaway rules
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Buttons Group */}
         <div className="w-full flex flex-col gap-2.5 pt-2">

@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account information and profile details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The user auth UID" },
+        "fullName": { "type": "string", "description": "Full name of customer" },
+        "email": { "type": "string", "format": "email", "description": "Customer email" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "avatarUrl": { "type": "string", "description": "Custom avatar or photo URL" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "fullName", "email"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Limpi 3-month recurring trash bin cleaning subscription",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique subscription ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "planType": { "type": "string", "enum": ["1-clean", "2-clean"], "description": "Plan tier" },
+        "totalBins": { "type": "number", "description": "Total trash bins serviced" },
+        "extraBinsCost": { "type": "number", "description": "Extra bins cost per 3 months" },
+        "totalPrice": { "type": "number", "description": "Total price billed per 3-month cycle" },
+        "status": { "type": "string", "enum": ["active", "paused", "canceled"], "description": "Current status" },
+        "selectedDay": { "type": "string", "description": "Service day of the week" },
+        "timeWindow": { "type": "string", "description": "Selected morning or afternoon window" },
+        "address": { "type": "object", "description": "Lehigh Acres service address" },
+        "currentCycleMonth": { "type": "number", "description": "Cycle progress month (1-3)" },
+        "nextCleaningDate": { "type": "string", "description": "Next scheduled clean" },
+        "orderId": { "type": "string", "description": "Customer order code" },
+        "createdAt": { "type": "string", "description": "Subscription start date" }
+      },
+      "required": ["id", "userId", "planType", "totalBins", "status"]
+    },
+    "Visit": {
+      "title": "Visit",
+      "description": "Scheduled or completed curbside cleaning visit",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Visit ID" },
+        "userId": { "type": "string", "description": "Customer user UID" },
+        "subscriptionId": { "type": "string", "description": "Linked subscription ID" },
+        "date": { "type": "string", "description": "Visit date" },
+        "timeWindow": { "type": "string", "description": "Service time window" },
+        "status": { "type": "string", "enum": ["confirmed", "scheduled", "completed"], "description": "Visit status" },
+        "completedAt": { "type": "string", "description": "Timestamp when finished" }
+      },
+      "required": ["id", "userId", "date", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Customer profile documents keyed by Auth UID"
+    },
+    "/users/{userId}/subscriptions/{subscriptionId}": {
+      "schema": "Subscription",
+      "description": "User subscriptions stored in customer subcollection"
+    },
+    "/users/{userId}/visits/{visitId}": {
+      "schema": "Visit",
+      "description": "Upcoming and past cleaning visits for the customer"
+    }
+  }
+}

@@ -3,16 +3,16 @@ import {
   Sparkles,
   MapPin,
   Calendar,
-  Lock,
   RotateCcw,
   CreditCard,
   HelpCircle,
   LogOut,
   ChevronRight,
   ShieldCheck,
-  AlertTriangle,
   Trash2,
   Camera,
+  Gift,
+  ArrowRight,
 } from 'lucide-react';
 import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
@@ -28,6 +28,7 @@ interface AccountScreenProps {
   onOpenHelp: () => void;
   onLogOut: () => void;
   onOpenAvatar?: () => void;
+  onOpenGiveawayRules?: () => void;
 }
 
 export const AccountScreen: React.FC<AccountScreenProps> = ({
@@ -38,16 +39,16 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
   onOpenHelp,
   onLogOut,
   onOpenAvatar,
+  onOpenGiveawayRules,
 }) => {
   const { t, language } = useLanguage();
   const [showCancelTooltip, setShowCancelTooltip] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const planName =
-    booking.planType === '1-clean'
-      ? t.standardPlanTitle
-      : t.frequentPlanTitle;
-  const planPrice = booking.planType === '1-clean' ? '79.95' : '99.95';
+  const isAnnual = booking.planType === 'annual';
+  const freeVisits = booking.freeVisitsRemaining ?? 5;
+  const currentMonthNum = booking.currentCycleMonth || 2;
+  const annualEndDateFormatted = translateDateString('Oct 24, 2025', language);
 
   const memberSinceLocalized =
     language === 'es'
@@ -56,15 +57,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
       ? 'Manm depi Septanm 2023'
       : 'Member since Sept 2023';
 
-  const nextCycleDate = translateDateString('Tue, Oct 24', language);
-  const minCycleEndDate = translateDateString('Nov 30, 2024', language);
-
-  const clean1Label =
-    language === 'es' ? 'Limpieza 1: Sep ✓' : language === 'ht' ? 'Netwayaj 1: Sep ✓' : 'Clean 1: Sept ✓';
-  const clean2Label =
-    language === 'es' ? 'Limpieza 2: Oct ✓' : language === 'ht' ? 'Netwayaj 2: Okt ✓' : 'Clean 2: Oct ✓';
-  const clean3Label =
-    language === 'es' ? 'Limpieza 3: 30 Nov' : language === 'ht' ? 'Netwayaj 3: 30 Nov' : 'Clean 3: Nov 30';
+  const nextCycleDate = translateDateString(booking.nextCleaningDate || 'Tue, Oct 24', language);
 
   const avatarTapHint =
     language === 'es'
@@ -106,7 +99,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-extrabold text-[#04264A] truncate">
-                  {booking.user.fullName || 'Sarah Jenkins'}
+                  {booking.user.fullName || 'Limpi Member'}
                 </h2>
                 <span className="px-2 py-0.5 rounded-full bg-[#E6F6F4] text-[#006A61] text-[10px] font-extrabold uppercase">
                   {t.activeStatus}
@@ -160,17 +153,21 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
           </div>
         </div>
 
-        {/* Current Plan Card ("Standard Monthly Clean, 2 Bins Included") */}
-        <div className="bg-[#E6F6F4]/70 border border-[#0BA89A]/25 rounded-3xl p-5 shadow-[0_4px_24px_rgba(4,38,74,0.06)] relative overflow-hidden flex flex-col gap-4">
+        {/* Current Plan Card ("Single Visit, no commitment" or "Annual Plan") */}
+        <div className="bg-[#E6F6F4]/75 border border-[#0BA89A]/25 rounded-3xl p-5 shadow-[0_4px_24px_rgba(4,38,74,0.06)] relative overflow-hidden flex flex-col gap-4">
           <div className="flex items-start justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-[#0BA89A] text-[11px] font-bold shadow-2xs mb-1.5">
                 <Sparkles className="w-3 h-3" />
                 {t.currentPlanBadge}
               </div>
-              <h3 className="text-lg font-black text-[#04264A]">{planName}</h3>
+              <h3 className="text-lg font-black text-[#04264A]">
+                {isAnnual ? 'Annual Plan' : 'Single Visit, no commitment'}
+              </h3>
               <p className="text-xs text-[#04264A]/70">
-                {booking.totalBins} {booking.totalBins === 1 ? t.oneBin : t.twoBins} (${planPrice} {t.forThreeMonths})
+                {isAnnual
+                  ? `$239.99 / year • ${booking.totalBins} ${booking.totalBins === 1 ? 'bin' : 'bins'} included`
+                  : `$19.99 per visit • ${booking.totalBins} ${booking.totalBins === 1 ? 'bin' : 'bins'} included`}
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-white border border-[#0BA89A]/20 flex flex-col items-center justify-center text-[#0BA89A] shadow-xs shrink-0">
@@ -181,50 +178,66 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
             </div>
           </div>
 
-          {/* 3-Month Minimum Progress Card */}
-          <div className="bg-white/95 rounded-2xl p-4 shadow-xs border border-[#04264A]/5 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#04264A] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#0BA89A]" />
-                {t.commitmentCycle}
+          {/* ANNUAL PLAN STATUS & PROGRESS (Month 2 of 12, End Date, Free Visits Counter) */}
+          {isAnnual ? (
+            <div className="bg-white/95 rounded-2xl p-4 shadow-xs border border-[#04264A]/5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#04264A] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-[#0BA89A]" />
+                  <span>Annual Commitment</span>
+                </span>
+                <span className="text-xs font-extrabold text-[#0BA89A]">
+                  Month {currentMonthNum} of 12
+                </span>
+              </div>
+
+              {/* Progress Bar (Month 2 of 12) */}
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                <div
+                  className="h-full bg-[#0BA89A] rounded-full transition-all duration-500"
+                  style={{ width: `${(currentMonthNum / 12) * 100}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#04264A]/70 pt-0.5">
+                <span>Month {currentMonthNum} of 12</span>
+                <span className="font-semibold text-[#04264A]">
+                  {language === 'es' ? 'Finaliza:' : language === 'ht' ? 'Fini:' : 'End date:'}{' '}
+                  {annualEndDateFormatted}
+                </span>
+              </div>
+
+              {/* Free Visits Left Counter */}
+              <div className="p-3 bg-[#E6F6F4]/70 rounded-xl flex items-center justify-between border border-[#0BA89A]/15">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-[#0BA89A]" />
+                  <span className="text-xs font-bold text-[#04264A]">
+                    {t.freeVisitsLeft}:
+                  </span>
+                </div>
+                <span className="text-sm font-black text-[#0BA89A] bg-white px-2.5 py-0.5 rounded-lg shadow-2xs">
+                  {freeVisits} left
+                </span>
+              </div>
+            </div>
+          ) : (
+            /* SINGLE VISIT DETAILS */
+            <div className="bg-white/95 rounded-2xl p-4 shadow-xs border border-[#04264A]/5 flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-[#04264A]">
+                No recurring commitment
               </span>
-              <span className="text-xs font-extrabold text-[#0BA89A]">
-                Month {booking.currentCycleMonth || 2} of 3
-              </span>
+              <p className="text-xs text-[#04264A]/75 leading-relaxed">
+                {t.singleVisitDesc}
+              </p>
+              <div className="pt-1 flex items-center gap-2 text-xs font-bold text-[#0BA89A]">
+                <Sparkles className="w-4 h-4" />
+                <span>Switch to Annual Plan for 5 FREE bonus visits!</span>
+              </div>
             </div>
+          )}
 
-            {/* Segmented Pill Progress */}
-            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex gap-1 p-0.5">
-              <div className="h-full bg-[#0BA89A] rounded-full flex-1" />
-              <div className="h-full bg-[#0BA89A] rounded-full flex-1" />
-              <div className="h-full bg-slate-200 rounded-full flex-1" />
-            </div>
-
-            <div className="flex justify-between items-center text-[10px] text-[#04264A]/70 font-semibold pt-0.5">
-              <span>{clean1Label}</span>
-              <span className="text-[#0BA89A] font-extrabold">{clean2Label}</span>
-              <span className="text-[#04264A]/50">{clean3Label}</span>
-            </div>
-
-            <p className="text-[11px] text-[#04264A]/70 mt-1 leading-relaxed">
-              {language === 'es'
-                ? `Su mínimo de 3 meses finaliza el ${minCycleEndDate}. Luego de eso, su plan pasa a mes a mes.`
-                : language === 'ht'
-                ? `Minimòm 3 mwa w la fini nan dat ${minCycleEndDate}. Apre sa, plan an ka anile nenpòt lè.`
-                : `Your 3-month minimum ends ${minCycleEndDate}. After that, your plan transitions to month-to-month.`}
-            </p>
-          </div>
-
-          {/* Warning Disclaimer Box */}
-          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-900 text-xs">
-            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-            <p className="text-[11px] leading-snug">
-              {t.pauseWarningHighlight}
-            </p>
-          </div>
-
-          {/* Action Buttons: Upgrade Plan & Change Bins both open Plan screen */}
-          <div className="flex flex-col gap-2">
+          {/* Action Buttons: Keep Upgrade Plan and Change Bins buttons; Single Visit users see Switch to Annual Plan */}
+          <div className="flex flex-col gap-2 pt-1">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -232,7 +245,9 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
                 className="h-11 bg-[#0BA89A] hover:bg-[#099185] active:scale-[0.98] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{t.upgradePlanBtn}</span>
+                <span>
+                  {isAnnual ? t.upgradePlanBtn : t.switchToAnnualPlanBtn}
+                </span>
               </button>
               <button
                 type="button"
@@ -244,35 +259,75 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
               </button>
             </div>
 
-            {/* Disabled Cancel Plan Button with Interactive Tooltip */}
-            <div className="relative">
+            {/* Cancel Plan Button with tooltip */}
+            {isAnnual && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelTooltip(true)}
+                  className="w-full h-11 bg-white/70 border border-[#04264A]/15 text-[#04264A]/60 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer hover:bg-white transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0BA89A]" />
+                  <span>{t.cancelPlanBtn}</span>
+                </button>
+
+                {showCancelTooltip && (
+                  <div className="absolute -top-12 inset-x-2 bg-[#04264A] text-white px-3 py-2 rounded-xl text-center text-[11px] font-semibold shadow-lg animate-in fade-in z-20 flex items-center justify-between">
+                    <span>
+                      {t.cancelTooltipText} ({annualEndDateFormatted})
+                    </span>
+                    <button
+                      onClick={() => setShowCancelTooltip(false)}
+                      className="ml-2 text-white/70 hover:text-white cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Small Card: My Giveaway Entry */}
+        <div className="bg-white rounded-3xl p-4 shadow-sm border border-[#04264A]/8 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#E6F6F4] text-[#0BA89A] flex items-center justify-center shrink-0 shadow-2xs">
+                <Gift className="w-4 h-4 stroke-[2.3]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-[#04264A]">My Giveaway Entry</span>
+                <span className="text-[11px] text-[#04264A]/60">1-Year Annual Client Drawing</span>
+              </div>
+            </div>
+            {isAnnual ? (
+              <span className="px-2.5 py-1 rounded-full bg-[#E6F6F4] text-[#006A61] text-[11px] font-extrabold flex items-center gap-1 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0BA89A]" />
+                Entered
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[#04264A]/60 text-[10px] font-bold">
+                Not eligible: Single Visit plan
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pt-1 border-t border-[#04264A]/6 text-xs">
+            <span className="text-[11px] text-[#04264A]/70">
+              {isAnnual
+                ? 'Chance to win: Outdoor Grill, Deep Freezer, or Toolbox Set'
+                : 'Commit to 1 year to enter the giveaway'}
+            </span>
+            {onOpenGiveawayRules && (
               <button
                 type="button"
-                onClick={() => setShowCancelTooltip(true)}
-                className="w-full h-11 bg-white/70 border border-[#04264A]/15 text-[#04264A]/60 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-not-allowed hover:bg-white transition-colors"
+                onClick={onOpenGiveawayRules}
+                className="text-[11px] font-bold text-[#0BA89A] underline hover:text-[#099185] cursor-pointer shrink-0 ml-2"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>{t.cancelPlanBtn}</span>
+                See giveaway rules
               </button>
-
-              {showCancelTooltip && (
-                <div className="absolute -top-12 inset-x-2 bg-[#04264A] text-white px-3 py-2 rounded-xl text-center text-[11px] font-semibold shadow-lg animate-in fade-in z-20 flex items-center justify-between">
-                  <span>
-                    {language === 'es'
-                      ? `Disponible tras el mínimo de 3 limpiezas (${minCycleEndDate})`
-                      : language === 'ht'
-                      ? `Disponib apre 3 netwayaj yo fini (${minCycleEndDate})`
-                      : `Available after 3-clean minimum ends ${minCycleEndDate}`}
-                  </span>
-                  <button
-                    onClick={() => setShowCancelTooltip(false)}
-                    className="ml-2 text-white/70 hover:text-white cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 

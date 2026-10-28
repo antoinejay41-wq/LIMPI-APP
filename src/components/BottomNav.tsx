@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Calendar, User } from 'lucide-react';
+import { Home, Calendar, Info, User } from 'lucide-react';
 import { ScreenId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -23,6 +23,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
       icon: Calendar,
     },
     {
+      id: 'about' as ScreenId,
+      label: t.navAbout,
+      icon: Info,
+    },
+    {
       id: 'account' as ScreenId,
       label: t.navAccount,
       icon: User,
@@ -35,7 +40,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
       aria-label="Main Navigation"
     >
-      <div className="max-w-md mx-auto grid grid-cols-3 h-16 items-center px-4">
+      <div className="max-w-md mx-auto grid grid-cols-4 h-16 items-center px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentScreen === tab.id;
@@ -50,7 +55,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
             >
               {/* Active pill background aura */}
               {isActive && (
-                <span className="absolute inset-x-3 inset-y-1.5 bg-[#E6F6F4] rounded-xl -z-10 transition-transform scale-95" />
+                <span className="absolute inset-x-2 inset-y-1.5 bg-[#E6F6F4] rounded-xl -z-10 transition-transform scale-95" />
               )}
               <Icon
                 className={`w-5 h-5 transition-transform duration-150 ${
@@ -58,7 +63,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
                 }`}
               />
               <span
-                className={`text-[11px] font-semibold tracking-tight mt-1 ${
+                className={`text-[10px] sm:text-[11px] font-semibold tracking-tight mt-1 truncate max-w-full px-1 ${
                   isActive ? 'font-bold text-[#0BA89A]' : 'text-[#04264A]/70'
                 }`}
               >

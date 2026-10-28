@@ -5,9 +5,10 @@ import {
   Trash2,
   CheckCircle2,
   ChevronRight,
-  AlertTriangle,
   Sparkles,
   History,
+  Gift,
+  PlusCircle,
 } from 'lucide-react';
 import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
@@ -18,6 +19,8 @@ interface ScheduleScreenProps {
   booking: BookingState;
   onNavigateToAccount: () => void;
   onManageVisit: () => void;
+  onBookAnotherVisit?: () => void;
+  onUseFreeVisit?: () => void;
   onOpenAvatar?: () => void;
 }
 
@@ -25,14 +28,19 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
   booking,
   onNavigateToAccount,
   onManageVisit,
+  onBookAnotherVisit,
+  onUseFreeVisit,
   onOpenAvatar,
 }) => {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-  const [showPauseModal, setShowPauseModal] = useState(false);
-  const [cycleRestarted, setCycleRestarted] = useState(false);
+  const [showBonusModal, setShowBonusModal] = useState(false);
+  const [bonusScheduledSuccess, setBonusScheduledSuccess] = useState(false);
+  const [bonusDay, setBonusDay] = useState('Friday');
 
   const rawFirstDate = booking.firstCleaningDate || `${booking.selectedDay || 'Tuesday'}, Oct 24`;
+  const isAnnual = booking.planType === 'annual';
+  const freeVisits = booking.freeVisitsRemaining ?? 5;
 
   const upcomingVisits = [
     {
@@ -87,9 +95,15 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
     },
   ];
 
-  const handleConfirmPause = () => {
-    setCycleRestarted(true);
-    setShowPauseModal(false);
+  const handleConfirmBonusVisit = () => {
+    if (onUseFreeVisit) {
+      onUseFreeVisit();
+    }
+    setBonusScheduledSuccess(true);
+    setTimeout(() => {
+      setBonusScheduledSuccess(false);
+      setShowBonusModal(false);
+    }, 1500);
   };
 
   return (
@@ -111,7 +125,7 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
               {t.cleaningRouteTitle}
             </h2>
             <p className="text-xs text-[#04264A]/70">
-              {t.cleaningRouteSubtitle}
+              {isAnnual ? 'Annual Membership • 12 Visits + 5 Bonus' : 'Single Visit Service'}
             </p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1 bg-[#E6F6F4] text-[#006A61] rounded-full text-xs font-bold border border-[#0BA89A]/20">
@@ -119,6 +133,53 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
             <span>{t.activeBadge}</span>
           </div>
         </div>
+
+        {/* Action Button: Book another visit (Single Visit) OR Use a free visit (Annual) */}
+        {isAnnual ? (
+          <div className="bg-[#E6F6F4]/80 border border-[#0BA89A]/25 rounded-2xl p-3.5 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#0BA89A] text-white flex items-center justify-center shadow-xs">
+                <Gift className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-extrabold text-[#04264A] block">
+                  {t.freeVisitsLeft}: <strong className="text-[#0BA89A]">{freeVisits}</strong>
+                </span>
+                <span className="text-[11px] text-[#04264A]/60">
+                  Included in your annual plan
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowBonusModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0BA89A] hover:bg-[#099185] active:scale-[0.98] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{t.useFreeVisitBtn}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl p-3.5 border border-[#0BA89A]/20 shadow-xs flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-[#04264A] block">
+                Single Visit • $19.99
+              </span>
+              <span className="text-[11px] text-[#04264A]/60">
+                Book whenever you need curb service
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onBookAnotherVisit || onManageVisit}
+              className="px-4 py-2 rounded-xl bg-[#0BA89A] hover:bg-[#099185] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>{t.bookAnotherVisitBtn}</span>
+            </button>
+          </div>
+        )}
 
         {/* Segmented View Toggle Switch */}
         <div className="bg-[#E6F6F4]/60 p-1 rounded-2xl flex items-center border border-[#0BA89A]/15 shadow-2xs">
@@ -161,7 +222,7 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
               return (
                 <div
                   key={visit.id}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-[#04264A]/8 relative overflow-hidden flex flex-col gap-3"
+                  className="bg-white rounded-3xl p-4.5 shadow-sm border border-[#04264A]/8 relative overflow-hidden flex flex-col gap-3"
                 >
                   {/* Top strip highlight if next */}
                   {visit.isNext && (
@@ -171,7 +232,7 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex gap-3">
                       <div
-                        className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 ${
+                        className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 ${
                           visit.isNext
                             ? 'bg-[#E6F6F4] text-[#0BA89A]'
                             : 'bg-slate-100 text-[#04264A]/70'
@@ -240,43 +301,6 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
                 </div>
               );
             })}
-
-            {/* 3-Month Minimum Policy Notice Box */}
-            <div className="mt-1 bg-white rounded-2xl p-4.5 border border-[#04264A]/8 shadow-xs flex flex-col gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="text-xs font-bold text-[#04264A]">
-                    {t.importantCommitmentRuleTitle}
-                  </h4>
-                  <p className="text-[11px] text-[#04264A]/70 mt-0.5 leading-relaxed">
-                    {t.importantCommitmentRuleDesc}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 bg-[#E6F6F4]/60 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#0BA89A]" />
-                  <span className="text-xs font-bold text-[#04264A]">
-                    {t.currentCommitmentCycle}
-                  </span>
-                </div>
-                <span className="text-xs font-extrabold text-[#006A61]">
-                  {cycleRestarted ? 'Month 1 of 3 (Restarted)' : `Month ${booking.currentCycleMonth || 2} of 3 (${t.onTrack})`}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowPauseModal(true)}
-                className="w-full py-2.5 rounded-xl border border-dashed border-[#04264A]/25 text-[#04264A]/70 hover:text-[#04264A] hover:border-[#04264A]/40 text-xs font-bold transition-colors cursor-pointer"
-              >
-                {t.pauseOrSkipBtn}
-              </button>
-            </div>
           </div>
         )}
 
@@ -290,10 +314,10 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
               return (
                 <div
                   key={past.id}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-[#04264A]/8 flex items-center justify-between"
+                  className="bg-white rounded-3xl p-4.5 shadow-sm border border-[#04264A]/8 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div>
@@ -315,42 +339,68 @@ export const ScheduleScreen: React.FC<ScheduleScreenProps> = ({
         )}
       </main>
 
-      {/* PAUSE CONFIRMATION MODAL */}
-      {showPauseModal && (
+      {/* SCHEDULE BONUS VISIT MODAL FOR ANNUAL USERS */}
+      {showBonusModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04264A]/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl flex flex-col gap-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
+          <div className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#E6F6F4] text-[#0BA89A] flex items-center justify-center shadow-xs">
+                <Gift className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <h3 className="text-base font-extrabold text-[#04264A]">
+                  {t.useFreeVisitBtn}
+                </h3>
+                <span className="text-xs text-[#0BA89A] font-bold">
+                  {t.freeVisitsLeft}: {freeVisits}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-base font-extrabold text-[#04264A]">
-                {t.holdOnTitle}
-              </h3>
-              <p className="text-xs text-amber-800 font-bold mt-1 bg-amber-50 p-2 rounded-xl">
-                {t.pauseWarningHighlight}
-              </p>
-              <p className="text-xs text-[#04264A]/70 mt-2 leading-relaxed">
-                {t.pauseWarningDetail}
-              </p>
+            <p className="text-xs text-[#04264A]/70 leading-relaxed">
+              Schedule a bonus curbside cleaning on any available weekday at no additional cost.
+            </p>
+
+            <div className="grid grid-cols-1 gap-1.5">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((dayName) => (
+                <button
+                  key={dayName}
+                  type="button"
+                  onClick={() => setBonusDay(dayName)}
+                  className={`p-2.5 rounded-xl text-left text-xs font-bold flex items-center justify-between cursor-pointer transition-all ${
+                    bonusDay === dayName
+                      ? 'bg-[#E6F6F4] text-[#006A61] border border-[#0BA89A]'
+                      : 'bg-slate-50 text-[#04264A] hover:bg-slate-100'
+                  }`}
+                >
+                  <span>{dayName}</span>
+                  {bonusDay === dayName && <CheckCircle2 className="w-4 h-4 text-[#0BA89A]" />}
+                </button>
+              ))}
             </div>
 
-            <div className="flex flex-col gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setShowPauseModal(false)}
-                className="h-12 rounded-xl bg-[#0BA89A] hover:bg-[#099185] text-white font-bold text-xs shadow-xs cursor-pointer active:scale-[0.98] transition-transform"
-              >
-                {t.keepMyVisitBtn}
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmPause}
-                className="h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#04264A]/70 font-semibold text-xs cursor-pointer"
-              >
-                {t.pauseAnywayBtn}
-              </button>
-            </div>
+            {bonusScheduledSuccess ? (
+              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold text-center">
+                ✓ {t.bonusVisitScheduled}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowBonusModal(false)}
+                  className="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#04264A] font-bold text-xs cursor-pointer"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmBonusVisit}
+                  className="h-11 rounded-xl bg-[#0BA89A] hover:bg-[#099185] text-white font-bold text-xs shadow-xs cursor-pointer"
+                >
+                  Confirm Free Visit
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

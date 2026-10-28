@@ -9,7 +9,7 @@ interface ForgotPasswordScreenProps {
 
 export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onBack }) => {
   const { t } = useLanguage();
-  const [email, setEmail] = useState('sarah@example.com');
+  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
   const handleSend = (e: React.FormEvent) => {
@@ -61,7 +61,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onBa
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="sarah@example.com"
+                  placeholder="name@example.com"
                   className="w-full h-13 pl-11 pr-4 bg-white text-[#04264A] text-sm rounded-xl outline-none focus:ring-2 focus:ring-[#0BA89A] transition-all border border-[#04264A]/10 font-medium shadow-2xs"
                   required
                 />

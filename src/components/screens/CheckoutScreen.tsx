@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowRight, CreditCard, ShieldCheck, Check, RotateCcw, Calendar, Trash2 } from 'lucide-react';
+import { ArrowRight, CreditCard, ShieldCheck, Check, RotateCcw, Calendar, Trash2, Plus, Minus, Sparkles, Gift } from 'lucide-react';
 import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-
 import { translateDay } from '../../i18n/dateUtils';
 
 interface CheckoutScreenProps {
@@ -11,6 +10,8 @@ interface CheckoutScreenProps {
   onAgreeTermsChange: (agreed: boolean) => void;
   onBack: () => void;
   onCompleteCheckout: () => void;
+  onUpdateExtraServices?: (count: number) => void;
+  onOpenGiveawayRules?: () => void;
 }
 
 export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
@@ -18,6 +19,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
   onAgreeTermsChange,
   onBack,
   onCompleteCheckout,
+  onUpdateExtraServices,
+  onOpenGiveawayRules,
 }) => {
   const { t, language } = useLanguage();
   const [agreed, setAgreed] = useState(booking.agreeTerms ?? true);
@@ -26,15 +29,25 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
   const [cvc, setCvc] = useState('847');
   const [zip, setZip] = useState(booking.address.zipCode || '33936');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [extraServices, setExtraServices] = useState(booking.extraServicesCount || 0);
 
-  const basePrice = booking.planType === '1-clean' ? 79.95 : 99.95;
+  const basePrice = booking.planType === 'single' ? 19.99 : 239.99;
   const extraBins = Math.max(0, booking.totalBins - 2);
-  const extraCost = extraBins * 15;
-  const totalDue = (basePrice + extraCost).toFixed(2);
+  const extraBinsCost = extraBins * 10;
+  const extraServicesCost = extraServices * 10;
+  const totalDue = (basePrice + extraBinsCost + extraServicesCost).toFixed(2);
 
   const handleCheckboxChange = (checked: boolean) => {
     setAgreed(checked);
     onAgreeTermsChange(checked);
+  };
+
+  const handleExtraServicesChange = (count: number) => {
+    const val = Math.max(0, count);
+    setExtraServices(val);
+    if (onUpdateExtraServices) {
+      onUpdateExtraServices(val);
+    }
   };
 
   const handleStartPlan = (e: React.FormEvent) => {
@@ -42,10 +55,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
     if (!agreed) {
       alert(
         language === 'es'
-          ? 'Por favor acepte el plan de 3 meses y la renovación automática para activar su suscripción.'
+          ? 'Por favor acepte los términos del servicio para continuar.'
           : language === 'ht'
-          ? 'Tanpri aksepte plan 3 mwa a ak renouvèlman otomatik la pou aktive abònman w lan.'
-          : 'Please agree to the 3-month plan and automatic renewal to activate your subscription.'
+          ? 'Tanpri aksepte règleman sèvis yo pou kontinye.'
+          : 'Please agree to the service plan terms to activate your order.'
       );
       return;
     }
@@ -58,14 +71,20 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
 
   const selectedDayLocalized = translateDay(booking.selectedDay || 'Tuesday', language);
   const scheduleLine =
-    language === 'es'
-      ? `Programado los ${selectedDayLocalized} • ${booking.timeWindow}`
+    booking.planType === 'annual'
+      ? language === 'es'
+        ? `Mensual los ${selectedDayLocalized} • ${booking.timeWindow}`
+        : language === 'ht'
+        ? `Chak mwa yon ${selectedDayLocalized} • ${booking.timeWindow}`
+        : `Monthly on ${booking.selectedDay}s • ${booking.timeWindow}`
+      : language === 'es'
+      ? `Fecha elegida: ${selectedDayLocalized} • ${booking.timeWindow}`
       : language === 'ht'
-      ? `Pwograme chak ${selectedDayLocalized} • ${booking.timeWindow}`
-      : `Scheduled on ${booking.selectedDay}s • ${booking.timeWindow}`;
+      ? `Dat chwazi: ${selectedDayLocalized} • ${booking.timeWindow}`
+      : `Booked for ${booking.selectedDay} • ${booking.timeWindow}`;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FCFB] pb-32">
+    <div className="flex flex-col min-h-screen bg-[#F8FCFB] pb-36">
       <ScreenHeader
         title={t.checkoutTitle}
         showBack={true}
@@ -92,68 +111,126 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
         </div>
 
         {/* Order Summary Card (Soft Mint Foundation) */}
-        <div className="w-full rounded-2xl bg-[#E6F6F4]/75 border border-[#0BA89A]/25 p-5 shadow-[0_4px_20px_rgba(4,38,74,0.06)] relative overflow-hidden flex flex-col gap-4">
+        <div className="w-full rounded-3xl bg-[#E6F6F4]/75 border border-[#0BA89A]/25 p-5 shadow-[0_4px_20px_rgba(4,38,74,0.06)] relative overflow-hidden flex flex-col gap-3.5">
           <div className="flex items-start justify-between pb-3 border-b border-[#04264A]/10">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-extrabold text-[#04264A]">
-                  Limpi {t.threeMonthPlan}
+                  {booking.planType === 'single' ? t.singleVisitTitle : t.annualPlanTitle}
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-white text-[#0BA89A] text-[10px] font-bold shadow-xs">
-                  {t.activeBadge}
+                  {booking.planType === 'annual' ? 'Best Value' : 'No Commitment'}
                 </span>
               </div>
               <p className="text-xs text-[#04264A]/70 mt-0.5">
-                {t.subTagline}
+                {booking.planType === 'annual'
+                  ? '1 cleaning visit every month + 5 bonus visits'
+                  : 'Choose the day you want your service, every time'}
               </p>
             </div>
             <div className="text-right">
               <span className="text-2xl font-black text-[#0BA89A]">${totalDue}</span>
               <span className="block text-[11px] font-medium text-[#04264A]/60">
-                {t.forThreeMonths}
+                {t.dueToday}
               </span>
             </div>
           </div>
 
-          {/* Feature inclusions */}
-          <div className="space-y-2.5 text-xs text-[#04264A]">
-            <div className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shrink-0 text-[#0BA89A] shadow-xs mt-0.5">
-                <Calendar className="w-3.5 h-3.5" />
+          {/* Itemized Order Breakdown */}
+          <div className="space-y-2 text-xs text-[#04264A] pb-1">
+            {/* Plan Line */}
+            <div className="flex items-center justify-between font-semibold">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-[#0BA89A]" />
+                <span>
+                  {booking.planType === 'single' ? 'Single Visit Service' : 'Annual Plan (12 Mo + 5 Free Visits)'}
+                </span>
               </div>
-              <div className="flex-1">
-                <p className="font-bold">
-                  {booking.planType === '1-clean'
-                    ? t.standardPlanTitle
-                    : t.frequentPlanTitle}
-                </p>
-                <p className="text-[11px] text-[#04264A]/65">
-                  {scheduleLine}
-                </p>
+              <span className="font-bold text-[#04264A]">${basePrice.toFixed(2)}</span>
+            </div>
+
+            {/* Extra Bins Line ($10 each) */}
+            <div className="flex items-center justify-between text-[#04264A]/80">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-3.5 h-3.5 text-[#0BA89A]" />
+                <span>
+                  Bins ({booking.totalBins} {booking.totalBins === 1 ? 'bin' : 'bins'})
+                  {extraBins > 0 ? ` • ${extraBins} extra @ $10/ea` : ' • 2 included'}
+                </span>
+              </div>
+              <span className="font-bold text-[#04264A]">
+                {extraBins > 0 ? `+$${extraBinsCost.toFixed(2)}` : '$0.00'}
+              </span>
+            </div>
+
+            {/* Extra Services in same month Line ($10 each) */}
+            <div className="flex items-center justify-between text-[#04264A]/80">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#0BA89A]" />
+                <span>
+                  Extra services in same month ($10 each)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-lg border border-[#04264A]/10">
+                  <button
+                    type="button"
+                    onClick={() => handleExtraServicesChange(extraServices - 1)}
+                    className="text-[#04264A]/60 hover:text-[#04264A] cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="font-bold text-xs tabular-nums px-1">{extraServices}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleExtraServicesChange(extraServices + 1)}
+                    className="text-[#0BA89A] hover:text-[#099185] cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+                <span className="font-bold text-[#04264A] w-12 text-right">
+                  {extraServicesCost > 0 ? `+$${extraServicesCost.toFixed(2)}` : '$0.00'}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shrink-0 text-[#0BA89A] shadow-xs mt-0.5">
-                <Trash2 className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold">
-                  {booking.totalBins} {booking.totalBins === 1 ? 'curbside bin' : 'curbside bins'} sanitized
-                </p>
-                <p className="text-[11px] text-[#04264A]/65">
-                  Curbside wash, high-temp steam, UV-sanitize & deodorize
-                </p>
-              </div>
+            {/* Schedule details */}
+            <div className="pt-2 border-t border-[#04264A]/8 text-[11px] text-[#04264A]/70 flex items-center justify-between">
+              <span>Schedule:</span>
+              <span className="font-semibold text-[#04264A]">{scheduleLine}</span>
             </div>
           </div>
 
           {/* Renewal disclaimer */}
           <div className="pt-2 border-t border-[#04264A]/10 flex items-center gap-2 text-xs font-semibold text-[#04264A]">
             <RotateCcw className="w-4 h-4 text-[#0BA89A] shrink-0" />
-            <span>Renews every 3 months until canceled.</span>
+            <span>
+              {booking.planType === 'annual'
+                ? 'Annual Plan automatically renews yearly. Cancel anytime before renewal.'
+                : 'Single visit booking. No recurring charges.'}
+            </span>
           </div>
         </div>
+
+        {/* Giveaway Line (Annual Plan only - Checkbox-free) */}
+        {booking.planType === 'annual' && (
+          <div className="bg-[#E6F6F4] border border-[#0BA89A]/25 rounded-2xl px-4 py-2.5 flex items-center justify-between text-xs font-bold text-[#006A61] shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Gift className="w-4 h-4 text-[#0BA89A] shrink-0" />
+              <span>You'll be entered in the new client gift giveaway.</span>
+            </div>
+            {onOpenGiveawayRules && (
+              <button
+                type="button"
+                onClick={onOpenGiveawayRules}
+                className="text-[11px] font-bold text-[#0BA89A] underline hover:text-[#099185] cursor-pointer ml-2 shrink-0"
+              >
+                Rules
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Express Checkout */}
         <div className="flex flex-col gap-2">
@@ -188,7 +265,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
         </div>
 
         {/* Payment Card Form */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#04264A]/8 flex flex-col gap-3">
+        <div className="bg-white rounded-3xl p-4.5 shadow-sm border border-[#04264A]/8 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#04264A] flex items-center gap-1.5">
               <CreditCard className="w-4 h-4 text-[#0BA89A]" />
@@ -268,7 +345,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
 
         {/* Mandatory Agreement Checkbox */}
         <label
-          className={`select-none cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3 ${
+          className={`select-none cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 ${
             agreed
               ? 'bg-[#E6F6F4]/60 border-[#0BA89A] shadow-xs'
               : 'bg-white border-amber-300'
@@ -291,7 +368,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
           </div>
           <div className="flex-1">
             <p className="text-xs text-[#04264A] leading-relaxed">
-              {t.agreeTermsCheckbox} <span className="font-bold text-[#0BA89A]">{t.termsWord}</span>.
+              {booking.planType === 'annual'
+                ? t.agreeAnnualTermsCheckbox
+                : t.agreeSingleTermsCheckbox}{' '}
+              <span className="font-bold text-[#0BA89A] underline">{t.termsWord}</span>.
             </p>
           </div>
         </label>
@@ -324,7 +404,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
               <span>{t.activatingPlan}</span>
             ) : (
               <>
-                <span>{t.startMyPlanBtn}</span>
+                <span>
+                  {booking.planType === 'annual' ? t.annualPlanBtn : t.startMyPlanBtn}
+                </span>
                 <ArrowRight className="w-5 h-5" />
               </>
             )}

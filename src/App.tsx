@@ -21,12 +21,24 @@ import { AccountScreen } from './components/screens/AccountScreen';
 import { PaymentMethodScreen } from './components/screens/PaymentMethodScreen';
 import { EditAddressScreen } from './components/screens/EditAddressScreen';
 import { HelpScreen } from './components/screens/HelpScreen';
+import { AboutScreen } from './components/screens/AboutScreen';
+import { GiveawayRulesScreen } from './components/screens/GiveawayRulesScreen';
 import { BottomNav } from './components/BottomNav';
 import { AvatarUploadModal } from './components/AvatarUploadModal';
+import { useAuth } from './context/AuthContext';
+import {
+  saveUserProfile,
+  saveUserSubscription,
+  subscribeToUserSubscriptions,
+  bookingToSubscription,
+} from './firebase/services';
 
 export default function App() {
+  const { user, signInWithGoogle, signOutUser } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('welcome');
-  const [planOrigin, setPlanOrigin] = useState<'signup' | 'account'>('signup');
+  const [planOrigin, setPlanOrigin] = useState<'signup' | 'account' | 'about'>('signup');
+  const [aboutOrigin, setAboutOrigin] = useState<'welcome' | 'nav'>('nav');
+  const [giveawayRulesOrigin, setGiveawayRulesOrigin] = useState<ScreenId>('plan');
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   // Central application state
@@ -37,9 +49,12 @@ export default function App() {
         : undefined;
 
     return {
-      planType: '1-clean',
+      planType: 'annual',
       totalBins: 2,
       extraBinsCost: 0,
+      extraServicesCount: 0,
+      extraServicesCost: 0,
+      freeVisitsRemaining: 5,
       selectedDay: 'Tuesday',
       timeWindow: 'Morning Window (7:30 AM - 11:30 AM)',
       address: {
@@ -52,9 +67,9 @@ export default function App() {
         isValidLehigh: true,
       },
       user: {
-        fullName: 'Sarah Jenkins',
-        email: 'sarah@example.com',
-        phone: '(239) 555-0192',
+        fullName: '',
+        email: '',
+        phone: '',
         avatarUrl: savedAvatar,
       },
       agreeTerms: true,
@@ -62,8 +77,49 @@ export default function App() {
       firstCleaningDate: 'Tuesday, Oct 24',
       nextCleaningDate: 'Tuesday, Oct 24',
       currentCycleMonth: 2,
+      annualEndDate: 'Oct 24, 2025',
     };
   });
+
+  // Sync with Firestore in real-time when user is authenticated
+  React.useEffect(() => {
+    if (!user) return;
+
+    // Update user info from auth if available
+    setBooking((prev) => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        fullName: user.displayName || prev.user.fullName,
+        email: user.email || prev.user.email,
+        avatarUrl: user.photoURL || prev.user.avatarUrl,
+      },
+    }));
+
+    // Listen to real-time subscription changes
+    const unsub = subscribeToUserSubscriptions(user.uid, (subs) => {
+      if (subs.length > 0) {
+        const latest = subs[0];
+        setBooking((prev) => ({
+          ...prev,
+          planType: latest.planType,
+          totalBins: latest.totalBins,
+          extraBinsCost: latest.extraBinsCost,
+          extraServicesCount: latest.extraServicesCount || 0,
+          extraServicesCost: latest.extraServicesCost || 0,
+          freeVisitsRemaining: latest.freeVisitsRemaining ?? (latest.planType === 'annual' ? 5 : 0),
+          selectedDay: latest.selectedDay,
+          timeWindow: latest.timeWindow,
+          address: latest.address,
+          currentCycleMonth: latest.currentCycleMonth || 2,
+          nextCleaningDate: latest.nextCleaningDate,
+          orderId: latest.orderId,
+        }));
+      }
+    });
+
+    return () => unsub();
+  }, [user]);
 
   const handleUpdateAvatar = (avatarUrl: string | undefined) => {
     setBooking((prev) => ({
@@ -78,6 +134,16 @@ export default function App() {
     } else {
       localStorage.removeItem('limpi_user_avatar');
     }
+    if (user) {
+      saveUserProfile({
+        id: user.uid,
+        fullName: booking.user.fullName,
+        email: booking.user.email,
+        phone: booking.user.phone,
+        avatarUrl,
+        createdAt: new Date().toISOString(),
+      });
+    }
   };
 
   // State update handlers
@@ -85,6 +151,7 @@ export default function App() {
     setBooking((prev) => ({
       ...prev,
       planType: plan,
+      freeVisitsRemaining: plan === 'annual' ? 5 : 0,
     }));
   };
 
@@ -93,7 +160,22 @@ export default function App() {
     setBooking((prev) => ({
       ...prev,
       totalBins: bins,
-      extraBinsCost: extra * 15,
+      extraBinsCost: extra * 10,
+    }));
+  };
+
+  const handleUpdateExtraServices = (count: number) => {
+    setBooking((prev) => ({
+      ...prev,
+      extraServicesCount: count,
+      extraServicesCost: count * 10,
+    }));
+  };
+
+  const handleUseFreeVisit = () => {
+    setBooking((prev) => ({
+      ...prev,
+      freeVisitsRemaining: Math.max(0, prev.freeVisitsRemaining - 1),
     }));
   };
 
@@ -102,6 +184,13 @@ export default function App() {
       ...prev,
       address: addr,
     }));
+    if (user) {
+      const sub = bookingToSubscription(user.uid, {
+        ...booking,
+        address: addr,
+      });
+      saveUserSubscription(user.uid, sub);
+    }
   };
 
   const handleUpdateDay = (day: string) => {
@@ -137,13 +226,79 @@ export default function App() {
           phone: userData.phone || prev.user.phone,
         },
       }));
+      if (user) {
+        saveUserProfile({
+          id: user.uid,
+          fullName: userData.name || booking.user.fullName,
+          email: userData.email || booking.user.email,
+          phone: userData.phone || booking.user.phone,
+          avatarUrl: booking.user.avatarUrl,
+          createdAt: new Date().toISOString(),
+        });
+      }
     }
     setPlanOrigin('signup');
     setCurrentScreen('how-it-works');
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = (credentials?: { email?: string }) => {
+    if (credentials?.email) {
+      const fallbackName = credentials.email.split('@')[0] || '';
+      setBooking((prev) => ({
+        ...prev,
+        user: {
+          ...prev.user,
+          email: credentials.email || prev.user.email,
+          fullName: prev.user.fullName || fallbackName,
+        },
+      }));
+    }
     setCurrentScreen('home');
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const signedIn = await signInWithGoogle();
+      if (signedIn) {
+        setBooking((prev) => ({
+          ...prev,
+          user: {
+            fullName: signedIn.displayName || prev.user.fullName,
+            email: signedIn.email || prev.user.email,
+            phone: signedIn.phoneNumber || prev.user.phone,
+            avatarUrl: signedIn.photoURL || prev.user.avatarUrl,
+          },
+        }));
+        await saveUserProfile({
+          id: signedIn.uid,
+          fullName: signedIn.displayName || 'Limpi Customer',
+          email: signedIn.email || '',
+          phone: signedIn.phoneNumber || '',
+          avatarUrl: signedIn.photoURL || undefined,
+          createdAt: new Date().toISOString(),
+        });
+        setCurrentScreen('home');
+      }
+    } catch (err) {
+      console.warn('Google Sign-In was cancelled or could not be completed:', err);
+    }
+  };
+
+  const handleLogOut = async () => {
+    try {
+      await signOutUser();
+    } catch (err) {
+      console.error(err);
+    }
+    setCurrentScreen('welcome');
+  };
+
+  const handleCompleteCheckout = async () => {
+    setCurrentScreen('confirmation');
+    if (user) {
+      const sub = bookingToSubscription(user.uid, booking);
+      await saveUserSubscription(user.uid, sub);
+    }
   };
 
   const handleOpenPlanFromAccount = () => {
@@ -151,10 +306,11 @@ export default function App() {
     setCurrentScreen('plan');
   };
 
-  // Bottom navigation visibility: appears ONLY on Home, Schedule, and Account
+  // Bottom navigation visibility: appears on Home, Schedule, About Us (when from tab), and Account
   const showBottomNav =
     currentScreen === 'home' ||
     currentScreen === 'schedule' ||
+    (currentScreen === 'about' && aboutOrigin !== 'welcome') ||
     currentScreen === 'account';
 
   return (
@@ -174,12 +330,29 @@ export default function App() {
               onCreateAccount={handleCreateAccount}
               onSignIn={handleSignIn}
               onForgotPassword={() => setCurrentScreen('forgot-password')}
+              onGoogleSignIn={handleGoogleSignIn}
+              onOpenAbout={() => {
+                setAboutOrigin('welcome');
+                setCurrentScreen('about');
+              }}
             />
           )}
 
           {/* 1b. FORGOT PASSWORD */}
           {currentScreen === 'forgot-password' && (
             <ForgotPasswordScreen onBack={() => setCurrentScreen('welcome')} />
+          )}
+
+          {/* ABOUT US */}
+          {currentScreen === 'about' && (
+            <AboutScreen
+              showBack={aboutOrigin === 'welcome'}
+              onBack={() => setCurrentScreen('welcome')}
+              onBookVisit={() => {
+                setPlanOrigin('about');
+                setCurrentScreen('plan');
+              }}
+            />
           )}
 
           {/* 2. HOW LIMPI WORKS AND PRICING */}
@@ -200,9 +373,15 @@ export default function App() {
               onSelectPlan={handleUpdatePlan}
               totalBins={booking.totalBins}
               onChangeBins={handleUpdateBins}
+              onOpenGiveawayRules={() => {
+                setGiveawayRulesOrigin('plan');
+                setCurrentScreen('giveaway-rules');
+              }}
               onBack={() => {
                 if (planOrigin === 'account') {
                   setCurrentScreen('account');
+                } else if (planOrigin === 'about') {
+                  setCurrentScreen('about');
                 } else {
                   setCurrentScreen('how-it-works');
                 }
@@ -235,6 +414,8 @@ export default function App() {
               onSelectDay={handleUpdateDay}
               selectedWindow={booking.timeWindow}
               onSelectWindow={handleUpdateWindow}
+              freeVisitsLeft={booking.freeVisitsRemaining}
+              onUseFreeVisit={handleUseFreeVisit}
               onBack={() => setCurrentScreen('address')}
               onContinue={() => setCurrentScreen('checkout')}
             />
@@ -245,8 +426,13 @@ export default function App() {
             <CheckoutScreen
               booking={booking}
               onAgreeTermsChange={handleAgreeTerms}
+              onUpdateExtraServices={handleUpdateExtraServices}
+              onOpenGiveawayRules={() => {
+                setGiveawayRulesOrigin('checkout');
+                setCurrentScreen('giveaway-rules');
+              }}
               onBack={() => setCurrentScreen('pick-day')}
-              onCompleteCheckout={() => setCurrentScreen('confirmation')}
+              onCompleteCheckout={handleCompleteCheckout}
             />
           )}
 
@@ -256,6 +442,10 @@ export default function App() {
               booking={booking}
               onGoHome={() => setCurrentScreen('home')}
               onViewSchedule={() => setCurrentScreen('schedule')}
+              onOpenGiveawayRules={() => {
+                setGiveawayRulesOrigin('confirmation');
+                setCurrentScreen('giveaway-rules');
+              }}
             />
           )}
 
@@ -283,6 +473,8 @@ export default function App() {
               booking={booking}
               onNavigateToAccount={() => setCurrentScreen('account')}
               onManageVisit={() => setCurrentScreen('visit-detail')}
+              onBookAnotherVisit={() => setCurrentScreen('pick-day')}
+              onUseFreeVisit={handleUseFreeVisit}
               onOpenAvatar={() => setIsAvatarModalOpen(true)}
             />
           )}
@@ -306,8 +498,12 @@ export default function App() {
               onOpenPayment={() => setCurrentScreen('payment-method')}
               onOpenAddress={() => setCurrentScreen('edit-address')}
               onOpenHelp={() => setCurrentScreen('help')}
-              onLogOut={() => setCurrentScreen('welcome')}
+              onLogOut={handleLogOut}
               onOpenAvatar={() => setIsAvatarModalOpen(true)}
+              onOpenGiveawayRules={() => {
+                setGiveawayRulesOrigin('account');
+                setCurrentScreen('giveaway-rules');
+              }}
             />
           )}
 
@@ -329,13 +525,25 @@ export default function App() {
           {currentScreen === 'help' && (
             <HelpScreen onBack={() => setCurrentScreen('account')} />
           )}
+
+          {/* 11. GIVEAWAY RULES */}
+          {currentScreen === 'giveaway-rules' && (
+            <GiveawayRulesScreen
+              onBack={() => setCurrentScreen(giveawayRulesOrigin)}
+            />
+          )}
         </div>
 
-        {/* Bottom Navigation: appears ONLY on Home, Schedule, and Account */}
+        {/* Bottom Navigation: appears on Home, Schedule, About Us, and Account */}
         {showBottomNav && (
           <BottomNav
             currentScreen={currentScreen}
-            onNavigate={(screen) => setCurrentScreen(screen)}
+            onNavigate={(screen) => {
+              if (screen === 'about') {
+                setAboutOrigin('nav');
+              }
+              setCurrentScreen(screen);
+            }}
           />
         )}
 

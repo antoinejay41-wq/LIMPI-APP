@@ -83,6 +83,22 @@ export const HowLimpiWorksScreen: React.FC<HowLimpiWorksScreenProps> = ({
           </div>
         </div>
 
+        {/* Pricing Summary Card */}
+        <div className="bg-[#E6F6F4]/75 border border-[#0BA89A]/25 rounded-2xl p-4 shadow-sm flex flex-col gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#0BA89A] text-white text-[10px] font-black uppercase tracking-wider">
+              PRICING
+            </span>
+            <span className="text-xs font-bold text-[#04264A]">Transparent Curb Care</span>
+          </div>
+          <p className="text-sm font-extrabold text-[#04264A] leading-snug">
+            {t.howLimpiWorksPricingText}
+          </p>
+          <p className="text-xs text-[#04264A]/70 leading-relaxed">
+            {t.pricingCardDesc}
+          </p>
+        </div>
+
 
         {/* Trust Guarantee Banner */}
         <div className="bg-white rounded-xl p-3.5 flex items-center gap-3 border border-[#04264A]/6 shadow-xs">

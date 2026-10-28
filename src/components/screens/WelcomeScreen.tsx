@@ -1,38 +1,42 @@
 import React, { useState } from 'react';
-import { User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import { User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 import { LimpiLogo } from '../LimpiLogo';
 import { LanguageSelector } from '../LanguageSelector';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface WelcomeScreenProps {
   onCreateAccount: (userData?: { name: string; email: string; phone: string }) => void;
-  onSignIn: () => void;
+  onSignIn: (credentials?: { email?: string }) => void;
   onForgotPassword: () => void;
+  onGoogleSignIn?: () => void;
+  onOpenAbout?: () => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onCreateAccount,
   onSignIn,
   onForgotPassword,
+  onGoogleSignIn,
+  onOpenAbout,
 }) => {
   const { t } = useLanguage();
   const [tab, setTab] = useState<'create' | 'signin'>('create');
-  const [fullName, setFullName] = useState('Sarah Jenkins');
-  const [phone, setPhone] = useState('(239) 555-0192');
-  const [email, setEmail] = useState('sarah@example.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (tab === 'create') {
       onCreateAccount({
-        name: fullName.trim() || 'Sarah Jenkins',
-        email: email.trim() || 'sarah@example.com',
-        phone: phone.trim() || '(239) 555-0192',
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
       });
     } else {
-      onSignIn();
+      onSignIn({ email: email.trim() });
     }
   };
 
@@ -128,7 +132,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="(239) 555-0192"
+                    placeholder="(239) 000-0000"
                     className="w-full h-13 pl-11 pr-4 bg-white text-[#04264A] text-sm rounded-xl outline-none focus:ring-2 focus:ring-[#0BA89A] transition-all border border-[#04264A]/10 font-medium"
                     required={tab === 'create'}
                   />
@@ -149,7 +153,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sarah@example.com"
+                placeholder="name@example.com"
                 className="w-full h-13 pl-11 pr-4 bg-white text-[#04264A] text-sm rounded-xl outline-none focus:ring-2 focus:ring-[#0BA89A] transition-all border border-[#04264A]/10 font-medium"
                 required
               />
@@ -223,7 +227,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => (tab === 'create' ? onCreateAccount() : onSignIn())}
+              onClick={() => (onGoogleSignIn ? onGoogleSignIn() : tab === 'create' ? onCreateAccount() : onSignIn())}
               className="h-12 bg-white hover:bg-slate-50 text-[#04264A] rounded-xl flex items-center justify-center gap-2 text-sm font-bold border border-[#04264A]/10 transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -262,12 +266,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </p>
           </div>
         </form>
-      </div>
-
-      {/* Serving Lehigh Acres anchor */}
-      <div className="flex items-center justify-center gap-1.5 mt-6 text-[#04264A]/70">
-        <MapPin className="w-4 h-4 text-[#0BA89A]" />
-        <span className="text-xs font-bold tracking-wide">{t.servingLehigh}</span>
       </div>
     </div>
   );
