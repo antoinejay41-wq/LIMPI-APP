@@ -4,6 +4,7 @@ import { ScreenHeader } from '../ScreenHeader';
 import { BookingState } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { translateDay } from '../../i18n/dateUtils';
+import { TermsOfCommitmentModal } from '../TermsOfCommitmentModal';
 
 interface CheckoutScreenProps {
   booking: BookingState;
@@ -12,6 +13,7 @@ interface CheckoutScreenProps {
   onCompleteCheckout: () => void;
   onUpdateExtraServices?: (count: number) => void;
   onOpenGiveawayRules?: () => void;
+  onNavigateToPlan?: () => void;
 }
 
 export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
@@ -21,6 +23,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
   onCompleteCheckout,
   onUpdateExtraServices,
   onOpenGiveawayRules,
+  onNavigateToPlan,
 }) => {
   const { t, language } = useLanguage();
   const [agreed, setAgreed] = useState(booking.agreeTerms ?? true);
@@ -30,6 +33,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
   const [zip, setZip] = useState(booking.address.zipCode || '33936');
   const [isProcessing, setIsProcessing] = useState(false);
   const [extraServices, setExtraServices] = useState(booking.extraServicesCount || 0);
+  const [showCommitmentModal, setShowCommitmentModal] = useState(false);
+  const [showReadOnlyCommitment, setShowReadOnlyCommitment] = useState(false);
+  const [commitmentAccepted, setCommitmentAccepted] = useState(false);
 
   const basePrice = booking.planType === 'single' ? 19.99 : 239.99;
   const extraBins = Math.max(0, booking.totalBins - 2);
@@ -50,8 +56,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
     }
   };
 
-  const handleStartPlan = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStartPlan = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!agreed) {
       alert(
         language === 'es'
@@ -62,11 +68,37 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
       );
       return;
     }
+
+    // For Annual Plan: Show Terms of Commitment agreement pop-up before payment
+    if (booking.planType === 'annual' && !commitmentAccepted) {
+      setShowCommitmentModal(true);
+      return;
+    }
+
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
       onCompleteCheckout();
     }, 700);
+  };
+
+  const handleAgreeCommitment = () => {
+    setCommitmentAccepted(true);
+    setShowCommitmentModal(false);
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      onCompleteCheckout();
+    }, 700);
+  };
+
+  const handleCancelCommitment = () => {
+    setShowCommitmentModal(false);
+    if (onNavigateToPlan) {
+      onNavigateToPlan();
+    } else {
+      onBack();
+    }
   };
 
   const selectedDayLocalized = translateDay(booking.selectedDay || 'Tuesday', language);
@@ -373,6 +405,15 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
                 : t.agreeSingleTermsCheckbox}{' '}
               <span className="font-bold text-[#0BA89A] underline">{t.termsWord}</span>.
             </p>
+            {booking.planType === 'annual' && (
+              <button
+                type="button"
+                onClick={() => setShowReadOnlyCommitment(true)}
+                className="mt-1.5 text-[11px] font-bold text-[#0BA89A] underline hover:text-[#099185] block cursor-pointer"
+              >
+                View Terms of Commitment
+              </button>
+            )}
           </div>
         </label>
 
@@ -413,6 +454,22 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Terms of Commitment Modal (Interactive: before payment for 1-Year Annual Plan) */}
+      <TermsOfCommitmentModal
+        isOpen={showCommitmentModal}
+        onClose={() => setShowCommitmentModal(false)}
+        onAgreeAndContinue={handleAgreeCommitment}
+        onCancelToPlan={handleCancelCommitment}
+        isReadOnly={false}
+      />
+
+      {/* Terms of Commitment Modal (Read-Only: viewed via link) */}
+      <TermsOfCommitmentModal
+        isOpen={showReadOnlyCommitment}
+        onClose={() => setShowReadOnlyCommitment(false)}
+        isReadOnly={true}
+      />
     </div>
   );
 };

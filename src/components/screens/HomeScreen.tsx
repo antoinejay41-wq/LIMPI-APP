@@ -43,7 +43,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FCFB] pb-24">
       <ScreenHeader
-        title="Limpi"
         showBack={false}
         showProfile={true}
         onProfileClick={onOpenAvatar || onNavigateToAccount}

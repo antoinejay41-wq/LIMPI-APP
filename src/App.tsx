@@ -432,6 +432,7 @@ export default function App() {
                 setCurrentScreen('giveaway-rules');
               }}
               onBack={() => setCurrentScreen('pick-day')}
+              onNavigateToPlan={() => setCurrentScreen('plan')}
               onCompleteCheckout={handleCompleteCheckout}
             />
           )}

@@ -48,7 +48,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
               <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
             </button>
           ) : (
-            <LimpiLogo size="sm" showWordmark={true} orientation="horizontal" />
+            <LimpiLogo size="sm" showWordmark={false} orientation="horizontal" />
           )}
 
           {title && (

@@ -19,6 +19,7 @@ import { BookingState } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { AvatarBadge } from '../AvatarBadge';
 import { translateDateString } from '../../i18n/dateUtils';
+import { TermsOfCommitmentModal } from '../TermsOfCommitmentModal';
 
 interface AccountScreenProps {
   booking: BookingState;
@@ -44,6 +45,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
   const { t, language } = useLanguage();
   const [showCancelTooltip, setShowCancelTooltip] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showCommitmentTermsModal, setShowCommitmentTermsModal] = useState(false);
 
   const isAnnual = booking.planType === 'annual';
   const freeVisits = booking.freeVisitsRemaining ?? 5;
@@ -218,6 +220,20 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
                 <span className="text-sm font-black text-[#0BA89A] bg-white px-2.5 py-0.5 rounded-lg shadow-2xs">
                   {freeVisits} left
                 </span>
+              </div>
+
+              {/* 1-Year Commitment Reminder & View Terms Link */}
+              <div className="pt-2 border-t border-[#04264A]/8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[11px]">
+                <span className="font-semibold text-[#04264A]/70">
+                  1-year commitment. Cancellation terms apply.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowCommitmentTermsModal(true)}
+                  className="font-bold text-[#0BA89A] underline hover:text-[#099185] cursor-pointer self-start sm:self-auto"
+                >
+                  View Terms of Commitment
+                </button>
               </div>
             </div>
           ) : (
@@ -472,6 +488,13 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({
           </div>
         </div>
       )}
+
+      {/* Terms of Commitment Read-Only Modal */}
+      <TermsOfCommitmentModal
+        isOpen={showCommitmentTermsModal}
+        onClose={() => setShowCommitmentTermsModal(false)}
+        isReadOnly={true}
+      />
     </div>
   );
 };

@@ -43,11 +43,11 @@ export const AboutScreen: React.FC<AboutScreenProps> = ({
               <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
             </button>
           ) : (
-            <LimpiLogo size="sm" showWordmark={true} orientation="horizontal" />
+            <LimpiLogo size="sm" showWordmark={false} orientation="horizontal" />
           )}
 
           <h1 className="text-base font-bold text-[#04264A] tracking-tight">
-            {t.aboutLimpiTitle}
+            {t.navAbout}
           </h1>
         </div>
 
